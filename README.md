@@ -36,7 +36,7 @@ This repository contains 2 of 3 of the .csv dataset files, 1 .malloynb file wher
 | `Map of States and Total Amount of Orders` | <img src="Map of States and Total Amuont of Orders.png" width="50%"> |
 | `Top Spending States` | <img src="Top Spending States.png" width="50%"> |
 | `Top Spending Age Groups` | <img src="Top Spending Age Groups.png" width="50%"> |
-| `Small Business Use?` | <img src="Small Business Use?.png" width="50%"> |
+| `Small Business Use?` | <img src="Small Business Use? .png" width="50%"> |
 | `Order Volume by Education Level` | <img src="Order Volume by Education Level.png" width="50%"> |
 | `Amazon Use Frequency vs Total Orders by Gender` | <img src="Amazon Use Frequency vs Total Orders by Gender.png" width="50%"> |
 | `Purchases by Ethnicity` | <img src="Purchases by Ethnicity.png" width="50%"> |
