@@ -1,0 +1,217 @@
+>>>malloy
+source: SurveyResponses is duckdb.table('./survey.csv') extend {
+   primary_key: `Survey ResponseID`
+   rename:
+    hispanic is `Q-demos-hispanic`
+    age is `Q-demos-age`
+    ethnicity is `Q-demos-race`
+    education is `Q-demos-education`
+    income is `Q-demos-income`
+    gender is `Q-demos-gender`
+    orientation is `Q-sexual-orientation`
+    demo_state is `Q-demos-state`
+    how_many_use is `Q-amazon-use-howmany`
+    hh_size is `Q-amazon-use-hh-size`
+    use_frequency is `Q-amazon-use-how-oft`
+    cigarettes is `Q-substance-use-cigarettes`
+    marijuana is `Q-substance-use-marijuana`
+    alcohol is `Q-substance-use-alcohol`
+    diabetes is `Q-personal-diabetes`
+    wheelchair is `Q-personal-wheelchair`
+    life_changes is `Q-life-changes`
+    sell_your_data is `Q-sell-YOUR-data`
+    sell_consumer_data is `Q-sell-consumer-data`
+    small_biz_use is `Q-small-biz-use`
+    census_use is `Q-census-use`
+    research_society is `Q-research-society`
+  
+  measure:
+    use_frequency_count is count(use_frequency)
+}
+
+source: AmazonPurchases is duckdb.table('./amazon-purchases.csv') extend {
+  
+   rename:
+    order_date is `Order Date`
+    unit_price is `Purchase Price Per Unit`
+    quantity is Quantity
+    state is `Shipping Address State`
+    title is Title
+    product_code is `ASIN/ISBN (Product Code)`
+    category is Category
+
+  measure:
+    total_spent is sum(unit_price * quantity)
+    total_orders is count()
+    avg_unit_price is avg(unit_price)
+
+  join_one: SurveyResponses with `Survey ResponseID` 
+
+  view: by_state is {
+    group_by: state
+    aggregate: total_orders
+  }
+
+  # shape_map
+  view: by_state_shaped is by_state 
+   
+}
+
+>>>markdown
+**Total Orders by Category**
+--
+Displays number of Amazon orders grouped by product category to identify which categories are most purchased.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: category
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Map of States and Total Amount of Orders**
+--
+Shows number of orders from each state in data set.
+>>>malloy
+run: AmazonPurchases -> by_state_shaped 
+>>>markdown
+**Top Spending by States**
+--
+Aggregates total purchase spending by shipping state to reveal geographic trends in customer spending for the 10 states with the highest spending.
+>>>malloy
+# bar_chart
+run: AmazonPurchases -> {
+  group_by: state
+  aggregate: total_spent
+  order_by: total_spent desc
+  limit: 10
+}
+>>>markdown
+**Top Spending Age Groups**
+--
+Ranks the top 10 age groups based on total purchase spending to identify the most active buyers.
+>>>malloy
+# bar_chart
+run: AmazonPurchases -> {
+  group_by: SurveyResponses.age
+  aggregate: total_spent
+  order_by: total_spent desc
+}
+>>>markdown
+**Top Purchased Products**
+--
+Shows the 10 most frequently purchased product titles, hekping highlight popular items across respondents.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: title
+  aggregate: total_orders
+  order_by: total_orders desc
+  limit: 10
+}
+>>>markdown
+**Average Purchase Price by Category**
+--
+Compares average unit price across product categories to show which types of items tend to cost more.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: category
+  aggregate: avg_unit_price
+  order_by: avg_unit_price desc
+}
+>>>markdown
+**How Often are Orders Business Related**
+--
+Analyzes the order volume of customers and whether they classify their orders as supplies for their small business or not. 
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: SurveyResponses.small_biz_use
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Order Volume by Education Level**
+--
+Breaks down the number of purchases by respondent education level to examine correlations with buying activity.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: SurveyResponses.education
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Amazon Use Frequency vs Total Orders by Age Group**
+--
+Compares how frequent respondents of a certain age group use their Amazon account to the total amount of orders the respondents in the category placed.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: 
+    SurveyResponses.age
+    SurveyResponses.use_frequency
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Amazon Use Frequency vs Total Orders by Gender**
+--
+Compares how frequent respondents of a certain gender use their Amazon account to the total amount of orders the respondents in the category placed.
+>>>malloy
+# bar_chart
+run: AmazonPurchases -> {
+  group_by: 
+    SurveyResponses.gender
+    SurveyResponses.use_frequency
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Income Level, Household Size, and Total Orders**
+--
+Compares a customer's income level/range (if they chose to disclose it) and their household size to their total orders.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: 
+    SurveyResponses.income
+   SurveyResponses.hh_size
+  aggregate: total_orders
+  order_by: total_orders desc
+}
+>>>markdown
+**Purchases by Ethnicity**
+--
+Shows total Amazon spending grouped by the 5 most prevalent etnicities to reveal any disparities or trends in customer behavior.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: SurveyResponses.ethnicity
+  aggregate: total_spent
+  order_by: total_spent desc
+  limit: 5
+}
+>>>markdown
+**Alcohol Use vs Total Spending**
+--
+Explores total amount spent on Amazon grouped by reported alcohol use to check for behavioral spending differences.
+>>>malloy
+run: AmazonPurchases -> {
+  group_by: SurveyResponses.alcohol
+  aggregate: total_spent
+}
+>>>markdown
+**"Sell Your Data" Attitude by Use Frequency**
+--
+Analyzes how willingness to sell personal data varies by how frequently the customer uses Amazon, based on survey responses.
+>>>malloy
+
+run: SurveyResponses -> {
+  group_by: 
+    sell_your_data
+    use_frequency
+}
+>>>markdown
+**Use Frequency by Reported Life Changes**
+--
+Measures the number of respondents who have disclosed changes in theie everyday lives, grouped by frequency of use.
+>>>malloy
+run: SurveyResponses -> {
+  group_by: 
+    life_changes
+    use_frequency
+}
